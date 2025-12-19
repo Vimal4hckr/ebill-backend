@@ -1,0 +1,19 @@
+# Node dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Firebase / secrets
+serviceAccountKey.json
+
+# Logs
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Build outputs
+dist/
+build/

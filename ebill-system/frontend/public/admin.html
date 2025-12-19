@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: Arial; background: #f4f6f8; padding: 20px; }
+    h2 { text-align: center; }
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      flex: 1;
+      text-align: center;
+      box-shadow: 0 0 6px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    th {
+      background: #333;
+      color: white;
+    }
+    .verified { color: green; font-weight: bold; }
+    .pending { color: orange; font-weight: bold; }
+    select {
+      padding: 6px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Admin Dashboard</h2>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="card">
+    <h3>Total Sales</h3>
+    <p id="totalSales">₹0</p>
+  </div>
+  <div class="card">
+    <h3>Today’s Sales</h3>
+    <p id="todaySales">₹0</p>
+  </div>
+  <div class="card">
+    <h3>Total Bills</h3>
+    <p id="billCount">0</p>
+  </div>
+</div>
+
+<!-- FILTER -->
+<label>
+  Filter Status:
+  <select id="statusFilter">
+    <option value="all">All</option>
+    <option value="pending">Pending</option>
+    <option value="verified">Verified</option>
+  </select>
+</label>
+
+<!-- TABLE -->
+<table>
+  <thead>
+    <tr>
+      <th>Bill ID</th>
+      <th>Customer</th>
+      <th>Total (₹)</th>
+      <th>Status</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody id="billRows"></tbody>
+</table>
+
+<script>
+  let allBills = [];
+
+  fetch("http://localhost:5000/api/admin/bills")
+    .then(res => res.json())
+    .then(data => {
+      allBills = data.bills;
+      renderDashboard(allBills);
+    });
+
+  function renderDashboard(bills) {
+    const rows = document.getElementById("billRows");
+    rows.innerHTML = "";
+
+    let totalSales = 0;
+    let todaySales = 0;
+    const today = new Date().toISOString().slice(0, 10);
+
+    bills.forEach(bill => {
+      const date = bill.createdAt?.slice(0, 10);
+
+      if (bill.status === "verified") {
+        totalSales += Number(bill.totalAmount || 0);
+        if (date === today) {
+          todaySales += Number(bill.totalAmount || 0);
+        }
+      }
+
+      rows.innerHTML += `
+        <tr>
+          <td>${bill.id}</td>
+          <td>${bill.customerName}</td>
+          <td>${bill.totalAmount}</td>
+          <td class="${bill.status}">${bill.status}</td>
+          <td>${date || "-"}</td>
+        </tr>
+      `;
+    });
+
+    document.getElementById("totalSales").innerText = "₹" + totalSales;
+    document.getElementById("todaySales").innerText = "₹" + todaySales;
+    document.getElementById("billCount").innerText = bills.length;
+  }
+
+  document.getElementById("statusFilter").addEventListener("change", e => {
+    const value = e.target.value;
+
+    if (value === "all") {
+      renderDashboard(allBills);
+    } else {
+      renderDashboard(allBills.filter(b => b.status === value));
+    }
+  });
+</script>
+
+</body>
+</html>
