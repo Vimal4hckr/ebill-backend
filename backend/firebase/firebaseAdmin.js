@@ -1,14 +1,42 @@
 const admin = require("firebase-admin");
+const path = require("path");
+const fs = require("fs");
 
+// =========================
+// 1️⃣ LOAD SERVICE ACCOUNT
+// =========================
+let serviceAccount;
+
+// 🔹 For Render / Production (recommended)
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+}
+// 🔹 For Local Development
+else {
+  const serviceKeyPath = path.join(__dirname, "..", "serviceAccountKey.json");
+
+  if (!fs.existsSync(serviceKeyPath)) {
+    throw new Error("❌ serviceAccountKey.json not found");
+  }
+
+  serviceAccount = require(serviceKeyPath);
+}
+
+// =========================
+// 2️⃣ INITIALIZE FIREBASE (ONLY ONCE)
+// =========================
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    }),
+    credential: admin.credential.cert(serviceAccount),
   });
 }
 
+// =========================
+// 3️⃣ FIRESTORE INSTANCE
+// =========================
 const db = admin.firestore();
+
+// =========================
+// 4️⃣ EXPORTS
+// =========================
 module.exports = { admin, db };

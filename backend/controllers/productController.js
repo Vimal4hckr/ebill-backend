@@ -1,32 +1,54 @@
-const db = require("../firebase/firebaseAdmin");
+const { db } = require("../firebase/firebaseAdmin");
 
+// =========================
+// ADD PRODUCT
+// =========================
 exports.addProduct = async (req, res) => {
   try {
-    const data = req.body;
+    const { name, price, category } = req.body;
 
-    // Validation
-    if (!data.name || !data.price) {
-      return res.status(400).json({ error: "Name and price are required" });
+    if (!name || price === undefined) {
+      return res.status(400).json({ error: "Product name and price are required" });
     }
 
-    data.createdAt = new Date();
+    const productRef = await db.collection("products").add({
+      name,
+      price,
+      category: category || "general",
+      createdAt: new Date()
+    });
 
-    await db.collection("products").add(data);
-
-    res.status(200).json({ message: "Product added successfully" });
+    res.status(201).json({
+      success: true,
+      productId: productRef.id
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Add Product Error:", error);
+    res.status(500).json({ error: "Failed to add product" });
   }
 };
 
+// =========================
+// GET ALL PRODUCTS
+// =========================
 exports.getProducts = async (req, res) => {
   try {
-    const snapshot = await db.collection("products").orderBy("createdAt", "desc").get();
+    const snapshot = await db
+      .collection("products")
+      .orderBy("createdAt", "desc")
+      .get();
 
-    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const products = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
-    res.json(products);
+    res.json({
+      success: true,
+      products
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Get Products Error:", error);
+    res.status(500).json({ error: "Failed to fetch products" });
   }
 };

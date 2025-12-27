@@ -1,8 +1,22 @@
 const express = require("express");
 const router = express.Router();
-const { createBill } = require("../controllers/billController");
+const auth = require("../middleware/authMiddleware");
 
-// ONLY route → controller
-router.post("/create", createBill);
+const {
+  createBill,
+  verifyBill
+} = require("../controllers/billController");
+
+// =========================
+// ADMIN SIDE (PROTECTED)
+// =========================
+// Create bill → requires login
+router.post("/create", auth, createBill);
+
+// =========================
+// SCAN SIDE (PUBLIC)
+// =========================
+// Verify bill → NO auth (QR scan)
+router.get("/verify/:billId", verifyBill);
 
 module.exports = router;
